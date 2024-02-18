@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="utf-8">
+    <title>Systems on Chips</title>
+    <link rel="icon" type="image/png" href="https://cdn.discordapp.com/attachments/861649974282158123/1208786433490296882/logotag.png?ex=65e48d17&is=65d21817&hm=488c5370b2fb53ba64b827927c1d599e50b072212b94d109107ad62d05559fff&" sizes="16x16">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <a href="index.html" class="absolute top-0 left-0 mt-4 ml-4">
+        <img src="https://cdn.discordapp.com/attachments/861649974282158123/1208786433490296882/logotag.png?ex=65e48d17&is=65d21817&hm=488c5370b2fb53ba64b827927c1d599e50b072212b94d109107ad62d05559fff&" alt="Logo" class="h-16 w-16">
+    </a>
+</head>
+<body class="flex flex-col justify-center items-center h-screen bg-zinc-900 bg-[url('https://cdn.discordapp.com/attachments/861649974282158123/1208739824148676648/grille.png?ex=65e461af&is=65d1ecaf&hm=a7d330eebbe8b36fb1cf730fd65756d8d8f78237f6e020295771a2661dc80fe3&')] bg-cover text-white font-mono subpixel-antialiased space-y-20">
+
+    <p class="text-9xl font-extrabold tracking-widest uppercase">
+        Systems on Chips
+    </p>
+
+    <div class="bg-zinc-800 p-8 rounded-xl shadow-2xl">
+        <h1 class="text-2xl text-center font-bold mb-4 max-w-3xl">Quels sont les avantages d’un tel système comparé à une architecture standard d’ordinateur ?</h1>
+        <form id="qcmForm" class="text-center">
+            <label class="block mb-2">
+                <input type="radio" name="reponse" value="false" class="mr-2"> Une plus grande longevité.
+            </label>
+            <label class="block mb-2">
+                <input type="radio" name="reponse" value="false" class="mr-2"> Une puissance accrue et une lecture de fichiers plus efficace.
+            </label>
+            <label class="block mb-2">
+                <input type="radio" name="reponse" value="true" class="mr-2"> Une portabilité, un gain de place et une consommation électrique réduite.
+            </label>
+            <button type="button" id="checker" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 shadow-xl">
+                Vérifier
+            </button>
+        </form>
+        <p id="messageReponse" class="max-w-md text-justify">
+        </p>
+
+        <div id="descriptionReponse" class="hidden" data-bonne-reponse="Bonne réponse !" data-description="Il permet évidemment une meilleure portabilité, un gain de place immense ainsi qu’une consommation électrique considérablement réduite permettant son utilisation dans des projets tels qu’un téléphone, une console portable ou d’autres projets nécessitant ces critères.">
+        </div>
+
+        <div id="lienSuivant" class="hidden" data-lien-suivant="third.html">
+        </div>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -132,13 +132,17 @@ h1::after {
 
 
 /* ── Picker section title ── */
-.picker-title {
+/* ── Picker section titles via ::before ── */
+.field-group[data-title]::before {
+  content: attr(data-title);
   font-family: var(--serif);
   font-weight: 300;
-  font-size: 1.15rem;
-  letter-spacing: .06em;
-  color: rgba(255,255,255,.55);
-  margin-bottom: -.6rem;
+  font-style: italic;
+  font-size: 1.05rem;
+  letter-spacing: .08em;
+  color: rgba(255,255,255,.9);
+  display: block;
+  margin-bottom: .2rem;
 }
 /* ── Field group ── */
 .inputs { display: flex; flex-direction: column; gap: 1.4rem; }
@@ -623,8 +627,8 @@ input[type=range]::-moz-range-thumb  {
   .results-empty { min-height: 120px; }
 
   /* Staggered fade-in on glass elements — opacity only, never transform */
-  .inputs .field-group:nth-child(1) .picker-shell { animation: fadeIn .6s .10s both; }
-  .inputs .field-group:nth-child(2) .picker-shell { animation: fadeIn .6s .18s both; }
+  .inputs .field-group:nth-child(2) .picker-shell { animation: fadeIn .6s .10s both; }
+  .inputs .field-group:nth-child(4) .picker-shell { animation: fadeIn .6s .18s both; }
   .col-inputs .slider-section                     { animation: fadeIn .6s .26s both; }
   .col-inputs #calc-btn                           { animation: fadeIn .6s .34s both; }
 

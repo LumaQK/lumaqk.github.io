@@ -1,20 +1,77 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="utf-8">
-    <title>Systems on Chips</title>
-    <link rel="icon" type="image/png" href="logotag.svg" sizes="16x16">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <a href="index.html" class="absolute top-0 left-0 mt-4 ml-4">
-        <img src="logotag.svg" alt="Logo" class="h-16 w-16">
-    </a>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sommeil</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
 </head>
-<body class="bg-zinc-900 bg-[url('grille.svg')] bg-cover flex flex-col justify-center items-center h-screen text-white font-mono subpixel-antialiased space-y-20">
-    <p class="md:text-7xl lg:text-9xl xl:text-10xl font-extrabold tracking-widest uppercase">
-        Systems on Chips
-    </p>
-    <button onclick="window.location.href='refresh.html'" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 shadow-xl">
-        Commencer l'examen
-    </button>
+<body>
+<main>
+
+  <header>
+    <h1>sommeil</h1>
+    <p class="subtitle">calculez vos cycles</p>
+  </header>
+
+  <div class="content-row">
+
+    <div class="col col-inputs">
+      <section class="inputs">
+        <div class="field-group">
+          <label>je me couche à</label>
+          <div class="picker-shell">
+            <div class="drum" id="bed-h" data-max="23" data-val="22"></div>
+            <div class="colon">:</div>
+            <div class="drum" id="bed-m" data-max="59" data-val="30"></div>
+          </div>
+        </div>
+        <div class="field-group">
+          <label>je veux me réveiller à</label>
+          <div class="picker-shell">
+            <div class="drum" id="wake-h" data-max="23" data-val="7"></div>
+            <div class="colon">:</div>
+            <div class="drum" id="wake-m" data-max="59" data-val="0"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="slider-section">
+        <div class="slider-header">
+          <label>temps d'endormissement</label>
+          <span id="latency-display">10 min</span>
+        </div>
+        <div class="slider-wrap">
+          <input type="range" id="latency" min="0" max="30" step="1" value="10"/>
+          <div class="ticks">
+            <span>0</span><span>5</span><span>10</span><span>15</span>
+            <span>20</span><span>25</span><span>30</span>
+          </div>
+        </div>
+      </section>
+
+      <button id="calc-btn">
+        <span>calculer</span>
+        <span class="moon">◐</span>
+      </button>
+    </div>
+
+    <div class="col-divider"></div>
+
+    <div class="col col-results">
+      <div id="results-empty" class="results-empty">
+        <span>🌙</span>
+        <p>vos cycles apparaîtront ici</p>
+      </div>
+      <section id="results" class="results hidden">
+        <div id="results-inner"></div>
+      </section>
+    </div>
+
+  </div>
+
+</main>
+<script src="script.js"></script>
 </body>
 </html>

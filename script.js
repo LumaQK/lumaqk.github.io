@@ -360,20 +360,18 @@ function render(cards, bestIdx, bed, idealBed, lat) {
     mat2 rot(float r) { return mat2(cos(r),sin(r),-sin(r),cos(r)); }
 
     vec3 grad(float t) {
-      if (lineGradientCount <= 1) return lineGradient[0];
       float s = clamp(t,0.0,0.9999)*float(lineGradientCount-1);
       int i = int(floor(s));
-      int j = min(i+1, lineGradientCount-1);
-      vec3 a = lineGradient[i];
-      vec3 b = lineGradient[j];
+      vec3 a = (i==0)?lineGradient[0]:(i==1)?lineGradient[1]:(i==2)?lineGradient[2]:(i==3)?lineGradient[3]:lineGradient[4];
+      vec3 b = (i==0)?lineGradient[1]:(i==1)?lineGradient[2]:(i==2)?lineGradient[3]:(i==3)?lineGradient[4]:lineGradient[5];
       return mix(a, b, fract(s)) * 0.5;
     }
 
     float wave(vec2 uv, float off, vec2 suv, vec2 muv) {
-      float t  = iTime * animationSpeed;
+      float t   = iTime * animationSpeed;
       float amp = sin(off + t*0.2) * 0.3;
-      float y  = sin(uv.x + off + t*0.1) * amp;
-      vec2  d  = suv - muv;
+      float y   = sin(uv.x + off + t*0.1) * amp;
+      vec2  d   = suv - muv;
       y += (muv.y - suv.y) * exp(-dot(d,d)*bendRadius) * bendStrength * bendInfluence;
       return 0.0175 / max(abs(uv.y - y)+0.01, 1e-3) + 0.01;
     }
@@ -382,26 +380,34 @@ function render(cards, bestIdx, bed, idealBed, lat) {
       vec2 uv = (2.0*gl_FragCoord.xy - iResolution) / iResolution.y;
       uv.y *= -1.0;
       uv += parallaxOffset;
-
       vec2 muv = (2.0*iMouse - iResolution) / iResolution.y;
       muv.y *= -1.0;
 
       vec3 col = vec3(0.0);
-      for (int i=0;i<6;++i) {
-        float fi=float(i);
-        vec2 ruv=uv*rot(-1.0*log(length(uv)+1.0));
-        col += grad(fi/5.0)*wave(ruv+vec2(0.05*fi+2.0,-0.7),1.5+0.2*fi,uv,muv)*0.2;
-      }
-      for (int i=0;i<6;++i) {
-        float fi=float(i);
-        vec2 ruv=uv*rot(0.2*log(length(uv)+1.0));
-        col += grad(fi/5.0)*wave(ruv+vec2(0.05*fi+5.0,0.0),2.0+0.15*fi,uv,muv);
-      }
-      for (int i=0;i<6;++i) {
-        float fi=float(i);
-        vec2 ruv=uv*rot(-0.4*log(length(uv)+1.0)); ruv.x*=-1.0;
-        col += grad(fi/5.0)*wave(ruv+vec2(0.05*fi+10.0,0.5),1.0+0.2*fi,uv,muv)*0.1;
-      }
+      float fi;
+      vec2 ruv;
+
+      fi=0.0; ruv=uv*rot(-1.0*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+2.0,-0.7),1.5+0.2*fi,uv,muv)*0.2;
+      fi=1.0; ruv=uv*rot(-1.0*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+2.0,-0.7),1.5+0.2*fi,uv,muv)*0.2;
+      fi=2.0; ruv=uv*rot(-1.0*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+2.0,-0.7),1.5+0.2*fi,uv,muv)*0.2;
+      fi=3.0; ruv=uv*rot(-1.0*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+2.0,-0.7),1.5+0.2*fi,uv,muv)*0.2;
+      fi=4.0; ruv=uv*rot(-1.0*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+2.0,-0.7),1.5+0.2*fi,uv,muv)*0.2;
+      fi=5.0; ruv=uv*rot(-1.0*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+2.0,-0.7),1.5+0.2*fi,uv,muv)*0.2;
+
+      fi=0.0; ruv=uv*rot(0.2*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+5.0,0.0),2.0+0.15*fi,uv,muv);
+      fi=1.0; ruv=uv*rot(0.2*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+5.0,0.0),2.0+0.15*fi,uv,muv);
+      fi=2.0; ruv=uv*rot(0.2*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+5.0,0.0),2.0+0.15*fi,uv,muv);
+      fi=3.0; ruv=uv*rot(0.2*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+5.0,0.0),2.0+0.15*fi,uv,muv);
+      fi=4.0; ruv=uv*rot(0.2*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+5.0,0.0),2.0+0.15*fi,uv,muv);
+      fi=5.0; ruv=uv*rot(0.2*log(length(uv)+1.0)); col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+5.0,0.0),2.0+0.15*fi,uv,muv);
+
+      fi=0.0; ruv=uv*rot(-0.4*log(length(uv)+1.0)); ruv.x*=-1.0; col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+10.0,0.5),1.0+0.2*fi,uv,muv)*0.1;
+      fi=1.0; ruv=uv*rot(-0.4*log(length(uv)+1.0)); ruv.x*=-1.0; col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+10.0,0.5),1.0+0.2*fi,uv,muv)*0.1;
+      fi=2.0; ruv=uv*rot(-0.4*log(length(uv)+1.0)); ruv.x*=-1.0; col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+10.0,0.5),1.0+0.2*fi,uv,muv)*0.1;
+      fi=3.0; ruv=uv*rot(-0.4*log(length(uv)+1.0)); ruv.x*=-1.0; col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+10.0,0.5),1.0+0.2*fi,uv,muv)*0.1;
+      fi=4.0; ruv=uv*rot(-0.4*log(length(uv)+1.0)); ruv.x*=-1.0; col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+10.0,0.5),1.0+0.2*fi,uv,muv)*0.1;
+      fi=5.0; ruv=uv*rot(-0.4*log(length(uv)+1.0)); ruv.x*=-1.0; col+=grad(fi/5.0)*wave(ruv+vec2(0.05*fi+10.0,0.5),1.0+0.2*fi,uv,muv)*0.1;
+
       gl_FragColor = vec4(col, 1.0);
     }
   `;
@@ -420,10 +426,13 @@ function render(cards, bestIdx, bed, idealBed, lat) {
 
   const canvas = document.createElement('canvas');
   canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;';
+  // Make body transparent so WebGL canvas shows through
+  document.body.style.background = 'transparent';
   document.body.prepend(canvas);
 
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (!gl) return;
+  gl.clearColor(0.03, 0.028, 0.063, 1.0); // dark #08070f
 
   const prog = gl.createProgram();
   gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER,   vert));
@@ -508,6 +517,7 @@ function render(cards, bestIdx, bed, idealBed, lat) {
     gl.uniform1f(u.bendInfluence, cInf);
     gl.uniform2f(u.parallaxOffset, cPx, cPy);
 
+    gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     requestAnimationFrame(loop);
   })(0);

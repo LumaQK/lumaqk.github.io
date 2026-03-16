@@ -327,39 +327,32 @@ function render(cards, bestIdx, bed, idealBed, lat) {
 }
 
 /* ────────────────────────────────────────
-   FLOATING LINES — Three.js WebGL shader
-   Ported from React Bits (exact GLSL).
-
-   Canvas injected directly into <body> as
-   position:fixed so backdrop-filter on glass
-   elements blurs the WebGL output.
-   body { background: transparent } is required.
+   FLOATING LINES — Native WebGL (no dependencies)
+   Exact same GLSL shader as React Bits original.
+   Works on GitHub Pages, no CDN required.
    ──────────────────────────────────────── */
 (function () {
   const GRADIENT     = ['#E945F5', '#2F4BC0', '#E945F5'];
-  const ANIM_SPEED   = 1;
+  const ANIM_SPEED   = 1.0;
   const BEND_RADIUS  = 5.0;
   const BEND_STR     = -0.5;
   const DAMPING      = 0.05;
   const PARALLAX_STR = 0.2;
 
   const vert = `
-    precision highp float;
-    void main() {
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    }`;
+    attribute vec2 a_pos;
+    void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+  `;
 
   const frag = `
     precision highp float;
     uniform float iTime;
-    uniform vec3  iResolution;
+    uniform vec2  iResolution;
     uniform float animationSpeed;
     uniform vec2  iMouse;
-    uniform bool  interactive;
     uniform float bendRadius;
     uniform float bendStrength;
     uniform float bendInfluence;
-    uniform bool  parallax;
     uniform vec2  parallaxOffset;
     uniform vec3  lineGradient[8];
     uniform int   lineGradientCount;
@@ -368,118 +361,154 @@ function render(cards, bestIdx, bed, idealBed, lat) {
 
     vec3 grad(float t) {
       if (lineGradientCount <= 1) return lineGradient[0];
-      float s = clamp(t,0.0,0.9999) * float(lineGradientCount-1);
+      float s = clamp(t,0.0,0.9999)*float(lineGradientCount-1);
       int i = int(floor(s));
-      return mix(lineGradient[i], lineGradient[min(i+1,lineGradientCount-1)], fract(s)) * 0.5;
+      int j = min(i+1, lineGradientCount-1);
+      vec3 a = lineGradient[i];
+      vec3 b = lineGradient[j];
+      return mix(a, b, fract(s)) * 0.5;
     }
 
     float wave(vec2 uv, float off, vec2 suv, vec2 muv) {
-      float t = iTime * animationSpeed;
-      float y = sin(uv.x + off + t*0.1) * (sin(off + t*0.2) * 0.3);
-      if (interactive) {
-        vec2 d = suv - muv;
-        y += (muv.y - suv.y) * exp(-dot(d,d)*bendRadius) * bendStrength * bendInfluence;
-      }
+      float t  = iTime * animationSpeed;
+      float amp = sin(off + t*0.2) * 0.3;
+      float y  = sin(uv.x + off + t*0.1) * amp;
+      vec2  d  = suv - muv;
+      y += (muv.y - suv.y) * exp(-dot(d,d)*bendRadius) * bendStrength * bendInfluence;
       return 0.0175 / max(abs(uv.y - y)+0.01, 1e-3) + 0.01;
     }
 
-    void mainImage(out vec4 o, in vec2 fc) {
-      vec2 uv = (2.0*fc - iResolution.xy) / iResolution.y;
+    void main() {
+      vec2 uv = (2.0*gl_FragCoord.xy - iResolution) / iResolution.y;
       uv.y *= -1.0;
-      if (parallax) uv += parallaxOffset;
+      uv += parallaxOffset;
 
-      vec2 muv = vec2(0.0);
-      if (interactive) { muv = (2.0*iMouse - iResolution.xy)/iResolution.y; muv.y *= -1.0; }
+      vec2 muv = (2.0*iMouse - iResolution) / iResolution.y;
+      muv.y *= -1.0;
 
       vec3 col = vec3(0.0);
       for (int i=0;i<6;++i) {
         float fi=float(i);
-        col += grad(fi/5.0) * wave(uv*rot(-1.0*log(length(uv)+1.0))+vec2(0.05*fi+2.0,-0.7), 1.5+0.2*fi, uv, muv) * 0.2;
+        vec2 ruv=uv*rot(-1.0*log(length(uv)+1.0));
+        col += grad(fi/5.0)*wave(ruv+vec2(0.05*fi+2.0,-0.7),1.5+0.2*fi,uv,muv)*0.2;
       }
       for (int i=0;i<6;++i) {
         float fi=float(i);
-        col += grad(fi/5.0) * wave(uv*rot(0.2*log(length(uv)+1.0))+vec2(0.05*fi+5.0,0.0), 2.0+0.15*fi, uv, muv);
+        vec2 ruv=uv*rot(0.2*log(length(uv)+1.0));
+        col += grad(fi/5.0)*wave(ruv+vec2(0.05*fi+5.0,0.0),2.0+0.15*fi,uv,muv);
       }
       for (int i=0;i<6;++i) {
         float fi=float(i);
-        vec2 ruv = uv*rot(-0.4*log(length(uv)+1.0)); ruv.x *= -1.0;
-        col += grad(fi/5.0) * wave(ruv+vec2(0.05*fi+10.0,0.5), 1.0+0.2*fi, uv, muv) * 0.1;
+        vec2 ruv=uv*rot(-0.4*log(length(uv)+1.0)); ruv.x*=-1.0;
+        col += grad(fi/5.0)*wave(ruv+vec2(0.05*fi+10.0,0.5),1.0+0.2*fi,uv,muv)*0.1;
       }
-      o = vec4(col, 1.0);
+      gl_FragColor = vec4(col, 1.0);
     }
-
-    void main() { vec4 c=vec4(0.0); mainImage(c,gl_FragCoord.xy); gl_FragColor=c; }`;
+  `;
 
   function hex3(h) {
     const v = h.replace('#','');
     return [parseInt(v.slice(0,2),16)/255, parseInt(v.slice(2,4),16)/255, parseInt(v.slice(4,6),16)/255];
   }
 
-  function boot() {
-    const T = window.THREE;
-    const scene    = new T.Scene();
-    const camera   = new T.OrthographicCamera(-1,1,1,-1,0,1);
-    camera.position.z = 1;
-
-    const renderer = new T.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
-    const canvas = renderer.domElement;
-    canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;';
-    document.body.prepend(canvas);
-
-    const stops = GRADIENT.slice(0, 8);
-    const gradArr = Array.from({ length: 8 }, (_, i) => new T.Vector3(...(i < stops.length ? hex3(stops[i]) : [1,1,1])));
-
-    const uniforms = {
-      iTime:            { value: 0 },
-      iResolution:      { value: new T.Vector3(1,1,1) },
-      animationSpeed:   { value: ANIM_SPEED },
-      iMouse:           { value: new T.Vector2(-1000,-1000) },
-      interactive:      { value: true },
-      bendRadius:       { value: BEND_RADIUS },
-      bendStrength:     { value: BEND_STR },
-      bendInfluence:    { value: 0 },
-      parallax:         { value: true },
-      parallaxOffset:   { value: new T.Vector2(0,0) },
-      lineGradient:     { value: gradArr },
-      lineGradientCount:{ value: stops.length },
-    };
-
-    scene.add(new T.Mesh(new T.PlaneGeometry(2,2), new T.ShaderMaterial({ uniforms, vertexShader: vert, fragmentShader: frag })));
-
-    const tMouse = new T.Vector2(-1000,-1000), cMouse = new T.Vector2(-1000,-1000);
-    const tPx    = new T.Vector2(0,0),         cPx    = new T.Vector2(0,0);
-    let tInf = 0, cInf = 0;
-
-    const setSize = () => {
-      renderer.setSize(innerWidth, innerHeight, false);
-      uniforms.iResolution.value.set(canvas.width, canvas.height, 1);
-    };
-    setSize();
-    window.addEventListener('resize', setSize);
-
-    window.addEventListener('mousemove', e => {
-      const dpr = renderer.getPixelRatio();
-      tMouse.set(e.clientX * dpr, (innerHeight - e.clientY) * dpr);
-      tInf = 1;
-      tPx.set((e.clientX / innerWidth - 0.5) * PARALLAX_STR, -(e.clientY / innerHeight - 0.5) * PARALLAX_STR);
-    });
-    window.addEventListener('mouseleave', () => { tInf = 0; });
-
-    let t0 = null;
-    (function loop(ts) {
-      if (t0 === null) t0 = ts;
-      uniforms.iTime.value = (ts - t0) / 1000;
-      cMouse.lerp(tMouse, DAMPING); uniforms.iMouse.value.copy(cMouse);
-      cInf += (tInf - cInf) * DAMPING; uniforms.bendInfluence.value = cInf;
-      cPx.lerp(tPx, DAMPING); uniforms.parallaxOffset.value.copy(cPx);
-      renderer.render(scene, camera);
-      requestAnimationFrame(loop);
-    })(0);
+  function compile(gl, type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
   }
 
-  const s = document.createElement('script');
-  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
-  s.onload = boot;
-  document.head.appendChild(s);
+  const canvas = document.createElement('canvas');
+  canvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;display:block;';
+  document.body.prepend(canvas);
+
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return;
+
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl, gl.VERTEX_SHADER,   vert));
+  gl.attachShader(prog, compile(gl, gl.FRAGMENT_SHADER, frag));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  // Full-screen quad
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  // Uniforms
+  const u = {
+    iTime:          gl.getUniformLocation(prog, 'iTime'),
+    iResolution:    gl.getUniformLocation(prog, 'iResolution'),
+    animationSpeed: gl.getUniformLocation(prog, 'animationSpeed'),
+    iMouse:         gl.getUniformLocation(prog, 'iMouse'),
+    bendRadius:     gl.getUniformLocation(prog, 'bendRadius'),
+    bendStrength:   gl.getUniformLocation(prog, 'bendStrength'),
+    bendInfluence:  gl.getUniformLocation(prog, 'bendInfluence'),
+    parallaxOffset: gl.getUniformLocation(prog, 'parallaxOffset'),
+    gradCount:      gl.getUniformLocation(prog, 'lineGradientCount'),
+  };
+
+  // Gradient stops
+  const stops = GRADIENT.slice(0,8);
+  gl.uniform1i(u.gradCount, stops.length);
+  stops.forEach((c, i) => {
+    const [r,g,b] = hex3(c);
+    gl.uniform3f(gl.getUniformLocation(prog, `lineGradient[${i}]`), r, g, b);
+  });
+
+  gl.uniform1f(u.animationSpeed, ANIM_SPEED);
+  gl.uniform1f(u.bendRadius,     BEND_RADIUS);
+  gl.uniform1f(u.bendStrength,   BEND_STR);
+  gl.uniform1f(u.bendInfluence,  0);
+  gl.uniform2f(u.iMouse,         -1000, -1000);
+  gl.uniform2f(u.parallaxOffset, 0, 0);
+
+  // Mouse state
+  let tMx=-1000, tMy=-1000, cMx=-1000, cMy=-1000;
+  let tInf=0, cInf=0;
+  let tPx=0, tPy=0, cPx=0, cPy=0;
+
+  function setSize() {
+    const w = innerWidth, h = innerHeight;
+    const dpr = Math.min(devicePixelRatio||1, 2);
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.uniform2f(u.iResolution, canvas.width, canvas.height);
+  }
+  setSize();
+  window.addEventListener('resize', setSize);
+
+  window.addEventListener('mousemove', e => {
+    const dpr = Math.min(devicePixelRatio||1, 2);
+    tMx = e.clientX * dpr;
+    tMy = (innerHeight - e.clientY) * dpr;
+    tInf = 1;
+    tPx = (e.clientX/innerWidth  - 0.5) * PARALLAX_STR;
+    tPy =-(e.clientY/innerHeight - 0.5) * PARALLAX_STR;
+  });
+  window.addEventListener('mouseleave', () => { tInf = 0; });
+
+  let t0 = null;
+  (function loop(ts) {
+    if (t0 === null) t0 = ts;
+    const t = (ts - t0) / 1000;
+
+    cMx += (tMx - cMx) * DAMPING; cMy += (tMy - cMy) * DAMPING;
+    cInf += (tInf - cInf) * DAMPING;
+    cPx  += (tPx  - cPx)  * DAMPING;
+    cPy  += (tPy  - cPy)  * DAMPING;
+
+    gl.uniform1f(u.iTime, t);
+    gl.uniform2f(u.iMouse, cMx, cMy);
+    gl.uniform1f(u.bendInfluence, cInf);
+    gl.uniform2f(u.parallaxOffset, cPx, cPy);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(loop);
+  })(0);
 })();

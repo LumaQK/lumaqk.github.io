@@ -268,7 +268,7 @@ document.getElementById('calc-btn').addEventListener('click', () => {
   if (isDesk && !main.classList.contains('revealed')) {
     main.classList.add('revealed');
   }
-  render(cards, bestIdx, bed, wake - IDEAL_N * CYCLE - latency, latency);
+  render(cards, bestIdx, bed, wake - (IDEAL_N + 1) * CYCLE - latency, latency);
 });
 
 /* ────────────────────────────────────────

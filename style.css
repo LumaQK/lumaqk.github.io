@@ -29,11 +29,10 @@
    compositing layer and breaks backdrop-filter.
 ── */
 html {
-  background: #08070f;
   -webkit-font-smoothing: antialiased;
 }
 body {
-  background: transparent;
+  background: #08070f;
   color: rgba(255,255,255,.92);
   font-family: var(--serif);
   min-height: 100vh;

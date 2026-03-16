@@ -329,8 +329,18 @@ function render(cards, bestIdx, bed, idealBed, lat) {
 /* ── FloatingLines background — native WebGL, no dependencies ── */
 (function () {
   const canvas = document.createElement('canvas');
-  canvas.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;';
+  canvas.style.position = 'fixed';
+  canvas.style.top = '0';
+  canvas.style.left = '0';
+  canvas.style.zIndex = '0';
+  canvas.style.pointerEvents = 'none';
+  canvas.style.width  = window.innerWidth  + 'px';
+  canvas.style.height = window.innerHeight + 'px';
   document.body.prepend(canvas);
+  // Body must be transparent so backdrop-filter on glass elements
+  // can blur the WebGL canvas that sits behind (z-index:0)
+  // Body color was just a loading fallback — canvas replaces it
+  document.body.style.background = 'transparent';
 
   const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
   if (!gl) { canvas.style.background='#08070f'; return; }
@@ -443,8 +453,11 @@ void main(){
   /* Resize */
   function resize() {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width  = window.innerWidth  * dpr;
-    canvas.height = window.innerHeight * dpr;
+    const w = window.innerWidth, h = window.innerHeight;
+    canvas.width  = w * dpr;
+    canvas.height = h * dpr;
+    canvas.style.width  = w + 'px';
+    canvas.style.height = h + 'px';
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
   resize();

@@ -568,13 +568,13 @@ input[type=range]::-moz-range-thumb  {
   main.revealed .col-inputs #calc-btn      { animation: nudgeLeft .4s .08s cubic-bezier(.4,0,.2,1) both; }
 
   @keyframes slideFromRight {
-    from { opacity: 0; transform: translateX(20px); }
-    to   { opacity: 1; transform: translateX(0); }
+    from { opacity: 0; }
+    to   { opacity: 1; }
   }
   @keyframes nudgeLeft {
-    0%   { opacity: 1; transform: translateX(0); }
-    45%  { opacity: .6; transform: translateX(-8px); }
-    100% { opacity: 1; transform: translateX(0); }
+    0%   { opacity: 1; }
+    45%  { opacity: .5; }
+    100% { opacity: 1; }
   }
 }
 

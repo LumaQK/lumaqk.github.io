@@ -42,12 +42,27 @@
 		background: linear-gradient(90deg, #8a6a2c, #e3c37a);
 		box-shadow: 0 0 10px rgba(227, 195, 122, 0.5);
 	}
+	#astuce {
+		position: absolute;
+		top: 100%;
+		left: -20vw;
+		right: -20vw;
+		margin-top: 3vw;
+		font-family: Georgia, "Times New Roman", serif;
+		font-style: italic;
+		font-size: 1.15vw;
+		color: #9c8d6e;
+		opacity: 0;
+		transition: opacity 1.2s ease;
+	}
+	#astuce.visible { opacity: 1; }
 </style>
 </head>
 <body>
 <div id="centre">
 	<div id="pourcent">0 %</div>
 	<div id="barre"><div id="remplissage"></div></div>
+	<div id="astuce"></div>
 </div>
 <script>
 // Un seul pourcentage global, calculé à partir de ce que GMod envoie à la page
@@ -144,6 +159,54 @@ function boucle() {
 	requestAnimationFrame(boucle);
 }
 requestAnimationFrame(boucle);
+
+// Phrases qui présentent le serveur, en fondu toutes les quelques secondes (ordre mélangé).
+var ASTUCES = [
+	"Ah, et tu savais que tu pouvais pêcher ? Cannes, appâts, coins secrets… et des records à battre.",
+	"Oui, oui, tu peux vraiment faire de la magie dans Eldoria. Encore faut-il s'éveiller à l'Arcane…",
+	"Cinq pages d'un manuscrit chiffré se cachent dans le monde. Rassemble-les, et la magie s'ouvrira à toi.",
+	"Certains mages savent prendre forme animale. Loup, ours, corbeau… à toi de découvrir les autres.",
+	"Un chaudron, quelques plantes cueillies au bord du chemin, et te voilà alchimiste.",
+	"Le palefrenier t'attend : choisis ta monture, nourris-la, et elle te restera fidèle.",
+	"Tu peux te battre à cheval. Oui, vraiment.",
+	"Épée et bouclier, épée longue, dagues ou lance : chaque arme a son style, ses combos et ses talents.",
+	"Plus tu manies une arme, plus tu la maîtrises. Chaque arme a son propre niveau.",
+	"Bûcheron, mineur, forgeron… récolte, fabrique, et équipe-toi de tes propres mains.",
+	"Ton livre de progression (touche B) garde tout : tes talents, ton journal et ton bestiaire.",
+	"Un seul compte, plusieurs vies : crée plusieurs personnages, chacun avec son nom, sa bourse et son histoire.",
+	"Humain, homme-chat ou homme-lézard : de quel peuple viendras-tu ?",
+	"Écris une lettre, glisse-la dans une boîte aux lettres… un corbeau la portera à son destinataire.",
+	"Une tête mise à prix ? Passe au tableau des primes, la patente de chasseur fera le reste.",
+	"La nuit tombe vraiment sur Eldoria. Garde une torche à portée de main.",
+	"Armures, tenues, sacs, coffres : ton inventaire se range comme un vrai paquetage.",
+	"Les armures se fabriquent à l'atelier. Les tenues, elles, ne te quittent jamais, même à la mort.",
+	"La carte enchantée te montre le royaume vu du ciel.",
+	"Tomber au combat n'est pas la fin : tu t'évanouis… puis tu te relèves.",
+	"Garde un œil sur ton endurance, ton souffle et ta santé. Le monde ne fait pas de cadeaux.",
+	"Les marchands achètent et vendent, le forgeron répare : ta bourse a toujours une utilité.",
+	"Chaque niveau te donne des points à dépenser dans ton livre. À toi de choisir ta voie.",
+	"Ici, on joue un rôle. Prends le temps de faire vivre ton personnage."
+];
+
+var elAstuce = document.getElementById("astuce");
+var ordre = [];
+for (var k = 0; k < ASTUCES.length; k++) ordre.push(k);
+for (var m = ordre.length - 1; m > 0; m--) {
+	var j = Math.floor(Math.random() * (m + 1));
+	var t = ordre[m]; ordre[m] = ordre[j]; ordre[j] = t;
+}
+var indexAstuce = 0;
+
+function astuceSuivante() {
+	elAstuce.className = "";
+	setTimeout(function () {
+		elAstuce.textContent = ASTUCES[ordre[indexAstuce % ordre.length]];
+		indexAstuce++;
+		elAstuce.className = "visible";
+	}, 1200);
+}
+astuceSuivante();
+setInterval(astuceSuivante, 7000);
 </script>
 </body>
 </html>

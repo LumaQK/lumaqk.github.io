@@ -1,80 +1,149 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Sommeil</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet"/>
+<meta charset="utf-8">
+<title>Eldoria - Chargement</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500&display=swap" rel="stylesheet">
+<style>
+	html, body {
+		margin: 0;
+		height: 100%;
+		background: #000;
+		overflow: hidden;
+		cursor: none;
+	}
+	#centre {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: 40vw;
+		min-width: 320px;
+		transform: translate(-50%, -50%);
+		text-align: center;
+	}
+	#pourcent {
+		font-family: "Cinzel", Georgia, "Times New Roman", serif;
+		font-size: 2.4vw;
+		color: #d8c08a;
+		letter-spacing: 0.08em;
+		margin-bottom: 1.2vw;
+		font-variant-numeric: tabular-nums;
+	}
+	#barre {
+		height: 6px;
+		background: #1a1a1a;
+		border: 1px solid #3a3122;
+		border-radius: 3px;
+		overflow: hidden;
+	}
+	#remplissage {
+		height: 100%;
+		width: 0%;
+		background: linear-gradient(90deg, #8a6a2c, #e3c37a);
+		box-shadow: 0 0 10px rgba(227, 195, 122, 0.5);
+	}
+</style>
 </head>
 <body>
-<main>
+<div id="centre">
+	<div id="pourcent">0 %</div>
+	<div id="barre"><div id="remplissage"></div></div>
+</div>
+<script>
+// Un seul pourcentage global, calculé à partir de ce que GMod envoie à la page
+// (GameDetails, SetFilesNeeded, DownloadingFile, SetStatusChanged).
+// Toujours croissant ; entre deux étapes il avance doucement vers le palier
+// suivant pour ne jamais sembler figé.
 
-  <header>
-    <h1>sommeil</h1>
-    <p class="subtitle">calculez vos cycles</p>
-  </header>
+var DL_DEBUT = 10;   // fin de la connexion, début des téléchargements
+var DL_FIN   = 70;   // fin des téléchargements
 
-  <div class="content-row">
+// Étapes reconnues dans les messages de statut (minuscules) -> [palier atteint, plafond avant l'étape suivante]
+var ETAPES = [
+	["retrieving server info",  [3, 9]],
+	["mounting addons",         [DL_FIN, 74]],
+	["workshop complete",       [DL_FIN, 74]],
+	["sending client info",     [74, 78]],
+	["client info sent",        [78, 84]],
+	["received all lua files",  [86, 90]],
+	["starting lua",            [90, 95]],
+	["lua started",             [95, 99]]
+];
 
-    <div class="col col-inputs">
-      <section class="inputs">
+var cible = 0;        // valeur réelle atteinte
+var plafond = 9;      // jusqu'où on peut « avancer doucement » sans nouvelle info
+var affiche = 0;      // valeur affichée (lissée)
+var fichiersAttendus = 0;
+var fichiersVus = {};
+var nbVus = 0;
 
-        <div class="field-group">
-          <p class="picker-title">heure de coucher</p>
-          <div class="picker-shell glass-el">
-            <div class="drum" id="bed-h" data-max="23" data-val="22"></div>
-            <div class="colon">:</div>
-            <div class="drum" id="bed-m" data-max="59" data-val="30"></div>
-          </div>
-        </div>
+function monter(valeur, nouveauPlafond) {
+	if (valeur > cible) cible = valeur;
+	if (nouveauPlafond !== undefined && nouveauPlafond > plafond) plafond = nouveauPlafond;
+	if (plafond < cible) plafond = cible;
+}
 
-        <div class="field-group">
-          <p class="picker-title">heure de réveil souhaitée</p>
-          <div class="picker-shell glass-el">
-            <div class="drum" id="wake-h" data-max="23" data-val="7"></div>
-            <div class="colon">:</div>
-            <div class="drum" id="wake-m" data-max="59" data-val="0"></div>
-          </div>
-        </div>
+function majTelechargement() {
+	// Le total n'est pas toujours connu (Workshop) : on garde une marge pour ne jamais atteindre 100 % trop tôt.
+	var total = Math.max(fichiersAttendus, nbVus + 1);
+	var part = Math.min(nbVus / total, 1);
+	monter(DL_DEBUT + (DL_FIN - DL_DEBUT) * part, DL_DEBUT + (DL_FIN - DL_DEBUT) * Math.min((nbVus + 1) / total, 1));
+}
 
-      </section>
+function GameDetails() {
+	monter(DL_DEBUT, DL_DEBUT + 5);
+}
 
-      <section class="slider-section glass-el">
-        <div class="slider-header">
-          <label>temps d'endormissement</label>
-          <span id="latency-display">10 min</span>
-        </div>
-        <div class="slider-wrap">
-          <input type="range" id="latency" min="0" max="30" step="1" value="10"/>
-          <div class="ticks">
-            <span>0</span><span>5</span><span>10</span><span>15</span>
-            <span>20</span><span>25</span><span>30</span>
-          </div>
-        </div>
-      </section>
+function SetFilesTotal(total) {}
 
-      <button id="calc-btn">
-        <span>calculer</span>
-        <span class="moon">◐</span>
-      </button>
-    </div>
+function SetFilesNeeded(needed) {
+	needed = Number(needed) || 0;
+	if (nbVus + needed > fichiersAttendus) fichiersAttendus = nbVus + needed;
+	majTelechargement();
+}
 
-    <div class="col-divider"></div>
+function DownloadingFile(nom) {
+	if (!fichiersVus[nom]) {
+		fichiersVus[nom] = true;
+		nbVus++;
+	}
+	if (cible < DL_DEBUT) monter(DL_DEBUT);
+	majTelechargement();
+}
 
-    <div class="col col-results">
-      <div id="results-empty" class="results-empty">
-        <span>🌙</span>
-        <p>vos cycles apparaîtront ici</p>
-      </div>
-      <section id="results" class="results hidden">
-        <div id="results-inner"></div>
-      </section>
-    </div>
+function SetStatusChanged(statut) {
+	var s = String(statut || "").toLowerCase();
+	for (var i = 0; i < ETAPES.length; i++) {
+		if (s.indexOf(ETAPES[i][0]) !== -1) {
+			monter(ETAPES[i][1][0], ETAPES[i][1][1]);
+			return;
+		}
+	}
+}
 
-  </div>
+var elPourcent = document.getElementById("pourcent");
+var elRemplissage = document.getElementById("remplissage");
+var dernier = Date.now();
 
-</main>
-<script src="script.js"></script>
+function boucle() {
+	var maintenant = Date.now();
+	var dt = Math.min((maintenant - dernier) / 1000, 0.5);
+	dernier = maintenant;
+
+	// Avance lente vers le plafond (asymptotique : ne l'atteint jamais vraiment).
+	if (cible < plafond) cible += (plafond - cible) * dt * 0.08;
+
+	// Lissage de l'affichage vers la cible.
+	affiche += (cible - affiche) * Math.min(dt * 6, 1);
+	if (affiche > 100) affiche = 100;
+
+	var p = Math.floor(affiche);
+	elPourcent.textContent = p + " %";
+	elRemplissage.style.width = affiche.toFixed(2) + "%";
+
+	requestAnimationFrame(boucle);
+}
+requestAnimationFrame(boucle);
+</script>
 </body>
 </html>

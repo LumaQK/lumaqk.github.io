@@ -12,6 +12,24 @@
 		overflow: hidden;
 		cursor: none;
 	}
+	.fond {
+		position: absolute;
+		top: 0; left: 0; right: 0; bottom: 0;
+		background-size: cover;
+		background-position: center;
+		opacity: 0;
+		transform: scale(1.0);
+		transition: opacity 2s ease, transform 12s linear;
+	}
+	.fond.visible {
+		opacity: 1;
+		transform: scale(1.08);
+	}
+	#voile {
+		position: absolute;
+		top: 0; left: 0; right: 0; bottom: 0;
+		background: radial-gradient(ellipse at center, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.85) 100%);
+	}
 	#centre {
 		position: absolute;
 		top: 50%;
@@ -27,6 +45,7 @@
 		color: #d8c08a;
 		letter-spacing: 0.08em;
 		margin-bottom: 1.2vw;
+		text-shadow: 0 2px 8px #000;
 		font-variant-numeric: tabular-nums;
 	}
 	#barre {
@@ -51,7 +70,8 @@
 		font-family: Georgia, "Times New Roman", serif;
 		font-style: italic;
 		font-size: 1.15vw;
-		color: #9c8d6e;
+		color: #cbb994;
+		text-shadow: 0 1px 6px #000, 0 0 2px #000;
 		opacity: 0;
 		transition: opacity 1.2s ease;
 	}
@@ -59,6 +79,9 @@
 </style>
 </head>
 <body>
+<div class="fond" id="fondA"></div>
+<div class="fond" id="fondB"></div>
+<div id="voile"></div>
 <div id="centre">
 	<div id="pourcent">0 %</div>
 	<div id="barre"><div id="remplissage"></div></div>
@@ -207,6 +230,37 @@ function astuceSuivante() {
 }
 astuceSuivante();
 setInterval(astuceSuivante, 7000);
+
+// Images de fond (fonds/fond_01.jpg …) en fondu enchaîné, ordre mélangé, sous un voile sombre.
+var NB_FONDS = 11;
+var fonds = [];
+for (var f = 1; f <= NB_FONDS; f++) fonds.push("fonds/fond_" + (f < 10 ? "0" : "") + f + ".jpg");
+for (var g = fonds.length - 1; g > 0; g--) {
+	var h = Math.floor(Math.random() * (g + 1));
+	var u = fonds[g]; fonds[g] = fonds[h]; fonds[h] = u;
+}
+var calques = [document.getElementById("fondA"), document.getElementById("fondB")];
+var indexFond = 0, calqueActif = 0;
+
+function fondSuivant() {
+	var url = fonds[indexFond % fonds.length];
+	indexFond++;
+	var img = new Image();
+	img.onload = function () {
+		var neuf = calques[1 - calqueActif], ancien = calques[calqueActif];
+		neuf.style.transition = "none";
+		neuf.className = "fond";
+		neuf.style.backgroundImage = "url('" + url + "')";
+		void neuf.offsetWidth;
+		neuf.style.transition = "";
+		neuf.className = "fond visible";
+		ancien.className = "fond";
+		calqueActif = 1 - calqueActif;
+	};
+	img.src = url;
+}
+fondSuivant();
+setInterval(fondSuivant, 9000);
 </script>
 </body>
 </html>
